@@ -3,160 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EUI Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        
-        .input-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-        
-        button:hover {
-            background-color: #45a049;
-        }
-        
-        textarea {
-            width: 100%;
-            height: 100px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            resize: vertical;
-            box-sizing: border-box;
-        }
-        
-        .error {
-            color: red;
-            margin-top: 5px;
-        }
-    </style>
+    <title>Device ID to EUI Converter</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>EUI Converter</h1>
+        <h1>DevCode / DevEUI Converter</h1>
         
-        <div class="input-group">
-            <label for="eui">EUI (required):</label>
-            <input type="text" id="eui" placeholder="Enter EUI" required>
-            <div id="euiError" class="error"></div>
+        <div class="info">
+            <p><strong>Example:</strong> DevCode <code>2145.00023003.2021</code> ↔ DevEUI <code>001a7988150059db</code></p>
         </div>
         
-        <div class="input-group">
-            <label for="prefix">Prefix (optional, default: 2145):</label>
-            <input type="text" id="prefix" placeholder="Enter prefix" value="2145">
+        <div class="form-group">
+            <label for="conversion-type">Conversion Type:</label>
+            <select id="conversion-type">
+                <option value="deviceid-to-eui">DevCode to DevEUI</option>
+                <option value="eui-to-deviceid">DevEUI to DevCode</option>
+            </select>
         </div>
         
-        <div class="input-group">
-            <button onclick="convertEUI()">Convert</button>
+        <!-- Device ID to EUI fields -->
+        <div id="deviceid-fields">
+            <div class="form-group">
+                <label for="deviceid-input">DevCode (format: XXXX.XXXXXXXX.XXXX):</label>
+                <input type="text" id="deviceid-input" placeholder="Example: 2145.00023003.2021">
+                <div id="deviceid-error" class="error hidden">Invalid DevCode format</div>
+            </div>
         </div>
         
-        <div class="input-group">
-            <label for="result">Result:</label>
-            <textarea id="result" readonly></textarea>
+        <!-- EUI to Device ID fields -->
+        <div id="eui-fields" class="hidden">
+            <div class="form-group">
+                <label for="model-code">Model Code:</label>
+                <input type="text" id="model-code" placeholder="Example: 2145">
+                <div id="model-code-error" class="error hidden">Model code is required</div>
+            </div>
+            <div class="form-group">
+                <label for="eui-input">EUI (16 hex characters):</label>
+                <input type="text" id="eui-input" placeholder="Example: 001a7988150059db">
+                <div id="eui-error" class="error hidden">EUI must be 16 hex characters</div>
+            </div>
+        </div>
+        
+        <button id="convert-btn">Convert</button>
+        
+        <div id="result" class="result hidden">
+            <h3>Result:</h3>
+            <p id="result-text"></p>
         </div>
     </div>
 
-    <script>
-        function test(eui, prefix = '2145') {
-            // just for example
-            // const companyCode = parseInt(eui.substr(0, 6), 16);
-            // just for example
-            // const deviceType = parseInt(eui.substr(6, 2), 16);
-            const year = `20${parseInt(eui.substr(8, 2), 16)}`;
-            const code = `${parseInt(eui.substr(10), 16)}`;
-            return `${prefix}.${code.padStart(8, '0')}.${year}`;
-        }
-        
-        function convertEUI() {
-            // Get input values
-            const eui = document.getElementById('eui').value.trim();
-            const prefix = document.getElementById('prefix').value.trim();
-            const euiError = document.getElementById('euiError');
-            const resultArea = document.getElementById('result');
-            
-            // Reset previous error
-            euiError.textContent = '';
-            resultArea.value = '';
-            
-            // Validate EUI (should be non-empty and have at least 12 characters for the function to work)
-            if (!eui) {
-                euiError.textContent = 'EUI is required';
-                return;
-            }
-            
-            if (eui.length < 12) {
-                euiError.textContent = 'EUI should be at least 12 characters long';
-                return;
-            }
-            
-            try {
-                // Call the test function
-                const result = test(eui, prefix || '2145');
-                
-                // Display the result
-                resultArea.value = result;
-            } catch (error) {
-                // Handle any errors
-                resultArea.value = `Error: ${error.message}`;
-            }
-        }
-        
-        // Allow Enter key to submit the form
-        document.getElementById('eui').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                convertEUI();
-            }
-        });
-        
-        document.getElementById('prefix').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                convertEUI();
-            }
-        });
-    </script>
+    <script src="main.js"></script>
 </body>
 </html>
