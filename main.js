@@ -1,7 +1,43 @@
 const ORGANIZATION_ID = '001a79';
-const PROTOCOL_ID = '88';
+const GENERAL_PROTOCOL_ID = '88';
+const ULTRASONIC_PROTOCOL_ID = 'a8';
+const DEFAULT_PROTOCOL_ID = GENERAL_PROTOCOL_ID;
+
+// model codes
+const ULTRASONIC_DEVICES_MODEL_CODES = ['5001', '5002', '5003'];
+
+// expected arguments length
 const DEVICE_ID_SIZE = 18;
 const EUI_SIZE = 16;
+
+/**
+ * Gets protocol ID for device by model code
+ * @param {string} modelCode - device model code
+ * @returns {string} - protocol ID
+ */
+function getProtocolIdForDevice(modelCode) {
+    const normalizedModelCode = modelCode.toString().padStart(4, '0');
+
+    if ( ULTRASONIC_DEVICES_MODEL_CODES.includes(normalizedModelCode) ) {
+        return ULTRASONIC_PROTOCOL_ID;
+    }
+
+    return DEFAULT_PROTOCOL_ID;
+}
+
+/**
+ * Extracts model code from Device ID
+ * @param {string} deviceId - Device ID in format XXXX.XXXXXXXX.XXXX
+ * @returns {string|null} - model code or null if invalid format
+ */
+function getModelCodeFromDeviceId(deviceId) {
+    if (!isValidDeviceId(deviceId)) {
+        return null;
+    }
+    
+    const parts = deviceId.split('.');
+    return parts[0];
+}
 
 const conversionType = document.getElementById('conversion-type');
 const deviceIdFields = document.getElementById('deviceid-fields');
@@ -112,17 +148,19 @@ function clearErrors() {
     euiError.classList.add('hidden');
 }
 
-
 function getEuiFromDeviceId(deviceId) {
     if (!isValidDeviceId(deviceId)) {
         return null;
     }
 
+    const modelCode = getModelCodeFromDeviceId(deviceId);
+    const protocolId = getProtocolIdForDevice(modelCode);
+    
     const [, number, year] = deviceId.split('.');
     const hexNumber = parseInt(number.slice(2), 10).toString(16).padStart(6, '0');
     const hexYear = parseInt(year.slice(2), 10).toString(16).padStart(2, '0');
 
-    return `${ORGANIZATION_ID}${PROTOCOL_ID}${hexYear}${hexNumber}`;
+    return `${ORGANIZATION_ID}${protocolId}${hexYear}${hexNumber}`;
 }
 
 function getDeviceIdFromEui(modelCode, eui) {
@@ -131,7 +169,14 @@ function getDeviceIdFromEui(modelCode, eui) {
     }
 
     modelCode = modelCode.toString().padStart(4, '0');
-
+    const protocolId = getProtocolIdForDevice(modelCode);
+    
+    // check that EUI contains expected organization ID and protocol ID
+    const expectedPrefix = `${ORGANIZATION_ID}${protocolId}`;
+    if (!eui.startsWith(expectedPrefix)) {
+        alert(`EUI doesn't start with expected prefix ${expectedPrefix} for device ${modelCode}`);
+    }
+    
     const hexYear = eui.slice(8, 10);
     const hexNumber = eui.slice(10);
 
